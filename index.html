@@ -763,15 +763,20 @@ let transferActive = false;
 let diagInterval = null;
 
 // ── UTILS ────────────────────────────────────────────────────────────
+const UI_CACHE = { rings: {}, elements: {} };
+function getCachedEl(id){
+  if(!UI_CACHE.elements[id]) UI_CACHE.elements[id]=document.getElementById(id);
+  return UI_CACHE.elements[id];
+}
 function fmtBytes(b){if(b<1024)return b+' B';if(b<1048576)return (b/1024).toFixed(1)+' KB';if(b<1073741824)return (b/1048576).toFixed(2)+' MB';return (b/1073741824).toFixed(2)+' GB';}
 function fmtSpeed(bps){if(bps<1024)return bps.toFixed(0)+' B/s';if(bps<1048576)return (bps/1024).toFixed(1)+' KB/s';return (bps/1048576).toFixed(2)+' MB/s';}
 function fmtEta(s){if(!isFinite(s)||s<0)return '—';if(s<60)return Math.ceil(s)+'s';return Math.floor(s/60)+'m '+Math.ceil(s%60)+'s';}
 function genCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from({length:6},()=>c[Math.floor(Math.random()*c.length)]).join('');}
 function setRing(id,pct){
-  const el=document.getElementById(id);
+  const el=getCachedEl(id);
   if(el){
-    const circ=parseFloat(getComputedStyle(el).getPropertyValue('--circ'))||440;
-    el.style.strokeDashoffset=circ-(pct/100)*circ;
+    if(!UI_CACHE.rings[id]) UI_CACHE.rings[id]=parseFloat(getComputedStyle(el).getPropertyValue('--circ'))||440;
+    el.style.strokeDashoffset=UI_CACHE.rings[id]-(pct/100)*UI_CACHE.rings[id];
   }
 }
 
@@ -958,6 +963,15 @@ function startDataStream(canvasId,mode){
   if(bg)bg.classList.add('active');
   const ctx=canvas.getContext('2d');let pts=[],raf,alive=true;
   canvas.width=canvas.offsetWidth;canvas.height=canvas.offsetHeight;canvas.classList.add('live');
+  
+  const offC = document.createElement('canvas'); offC.width=40; offC.height=40;
+  const octx = offC.getContext('2d');
+  octx.beginPath();octx.arc(20,20,16,0,Math.PI*2);
+  octx.fillStyle='rgba(0,122,255,0.18)';octx.fill();
+  octx.lineWidth=2;octx.strokeStyle='rgba(0,122,255,0.7)';octx.stroke();
+  octx.beginPath();octx.arc(14,14,4,0,Math.PI*2);
+  octx.fillStyle='rgba(255,255,255,0.9)';octx.fill();
+
   function spawn(){
     const cx=canvas.width/2,cy=canvas.height/2,angle=Math.random()*Math.PI*2,radius=Math.max(cx,cy)+50;
     const r=3+Math.random()*6;
@@ -974,12 +988,9 @@ function startDataStream(canvasId,mode){
       if(mode==='send'){if(dist>100)p.alpha=Math.min(0.8,p.alpha+0.05);if(dist<40)p.alpha-=0.1;}
       else{if(dist>Math.max(canvas.width,canvas.height)/2-50)p.alpha-=0.05;else p.alpha=Math.min(0.8,p.alpha+0.1);}
       if(p.alpha<=0&&dist<100){pts.splice(i,1);continue;}
-      const dx=p.x+wobbleX, dy=p.y+wobbleY;
-      ctx.beginPath();ctx.arc(dx,dy,p.r,0,Math.PI*2);
-      ctx.fillStyle=`rgba(0, 122, 255, ${Math.max(0,p.alpha*0.15)})`;ctx.fill();
-      ctx.lineWidth=1.5;ctx.strokeStyle=`rgba(0, 122, 255, ${Math.max(0,p.alpha*0.6)})`;ctx.stroke();
-      ctx.beginPath();ctx.arc(dx-p.r*0.3,dy-p.r*0.3,p.r*0.25,0,Math.PI*2);
-      ctx.fillStyle=`rgba(255, 255, 255, ${Math.max(0,p.alpha*0.9)})`;ctx.fill();
+      const dx=p.x+wobbleX, dy=p.y+wobbleY, size=p.r*2.5;
+      ctx.globalAlpha = Math.max(0, p.alpha);
+      ctx.drawImage(offC, dx-size/2, dy-size/2, size, size);
     }
   }
   frame();
@@ -1083,13 +1094,22 @@ function sendInChunks(conn){
 
   ctrl({type:'batch-meta',count:files.length,totalSize,files:files.map(f=>({name:f.name,size:f.size,mime:f.type}))});
 
+  let lastPctTime=0, lastPctVal=-1;
   function updateUI(sent,total){
-    const now=Date.now(),elapsed=(now-lastTime)/1000,pct=Math.min(100,Math.round((sent/total)*100));
-    setRing('send-ring',pct);document.getElementById('send-pct').textContent=pct+'%';document.getElementById('send-sent').textContent=fmtBytes(sent);
+    const now=Date.now(), elapsed=(now-lastTime)/1000, pct=Math.min(100,Math.round((sent/total)*100));
+    if(now - lastPctTime > 40 || pct === 100){
+      if(pct !== lastPctVal){
+        setRing('send-ring',pct);
+        getCachedEl('send-pct').textContent=pct+'%';
+        lastPctVal = pct;
+      }
+      getCachedEl('send-sent').textContent=fmtBytes(sent);
+      lastPctTime = now;
+    }
     if(elapsed>=0.5){
       const speed=elapsed>0?(sent-lastTotalSent)/elapsed:0,remaining=total-sent;
-      document.getElementById('send-speed').textContent=fmtSpeed(speed);
-      document.getElementById('send-eta').textContent=fmtEta(speed>0?remaining/speed:Infinity);
+      getCachedEl('send-speed').textContent=fmtSpeed(speed);
+      getCachedEl('send-eta').textContent=fmtEta(speed>0?remaining/speed:Infinity);
       lastTotalSent=sent;lastTime=now;
     }
   }
@@ -1235,17 +1255,23 @@ function listenForFile(conn){
   let filesProcessed=0,batchDoneReceived=false,pendingProcessing=0;
   const stopStream=startDataStream('recv-canvas','recv');
 
+  let lastPctTime=0, lastPctVal=-1;
   function updateUI(received,total){
-    const pct=Math.min(100,Math.round((received/total)*100));
-    setRing('recv-ring',pct);
-    document.getElementById('recv-pct').textContent=pct+'%';
-    document.getElementById('recv-got').textContent=fmtBytes(received);
-    const diagEl=document.getElementById('diag-recv-chunks');if(diagEl)diagEl.textContent=chunkCount;
-    const now=Date.now(),elapsed=(now-lastTime)/1000;
+    const now=Date.now(), elapsed=(now-lastTime)/1000, pct=Math.min(100,Math.round((received/total)*100));
+    if(now - lastPctTime > 40 || pct === 100){
+      if(pct !== lastPctVal){
+        setRing('recv-ring',pct);
+        getCachedEl('recv-pct').textContent=pct+'%';
+        lastPctVal = pct;
+      }
+      getCachedEl('recv-got').textContent=fmtBytes(received);
+      const diagEl=getCachedEl('diag-recv-chunks');if(diagEl)diagEl.textContent=chunkCount;
+      lastPctTime = now;
+    }
     if(elapsed>=0.5){
       const speed=elapsed>0?(received-lastRcv)/elapsed:0,remaining=total-received;
-      document.getElementById('recv-speed').textContent=fmtSpeed(speed);
-      document.getElementById('recv-eta').textContent=fmtEta(speed>0?remaining/speed:Infinity);
+      getCachedEl('recv-speed').textContent=fmtSpeed(speed);
+      getCachedEl('recv-eta').textContent=fmtEta(speed>0?remaining/speed:Infinity);
       lastRcv=received;lastTime=now;
     }
   }
