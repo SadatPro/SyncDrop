@@ -3,16 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SyncDrop — Premium P2P Sharing</title>
+<title>SyncDrop — Premium P2P</title>
 <link rel="icon" href="https://i.ibb.co/RkPC5fWT/Chat-GPT-Image-Jun-8-2026-11-18-05-AM.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 <style>
 :root {
   --primary: #007AFF; /* Premium iOS-like Blue */
@@ -350,8 +349,558 @@ body::before {
   .orbit-ring { width: 100%; height: 100%; }
 }
 </style>
+<style>
+:root {
+  --primary: #6366F1;
+  --primary-glow: rgba(99, 102, 241, 0.4);
+  --secondary: #8B5CF6;
+  --bg-app: #0a0a0f;
+  --card-bg: rgba(255, 255, 255, 0.03);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --text-main: #F8FAFC;
+  --text-muted: #94A3B8;
+  --success: #10B981;
+  --danger: #EF4444;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+#legacy-ui { display: none !important; }
+body {
+  background: var(--bg-app);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  display: block;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0;
+  margin: 0;
+}
+.app-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  padding: 0;
+}
+@media (min-width: 768px) {
+  .app-wrapper {
+    padding: 20px;
+  }
+  .app-wrapper::before,
+  .app-wrapper::after {
+    content: '';
+    flex: 1;
+    min-height: 20px;
+  }
+}
+
+/* Animated Mesh Background */
+.bg-mesh {
+  position: absolute;
+  top: -50%; left: -50%; width: 200%; height: 200%;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.1) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.1) 0%, transparent 40%);
+  z-index: -1;
+  animation: meshFloat 20s infinite linear alternate;
+}
+@keyframes meshFloat {
+  0% { transform: scale(1) rotate(0deg); }
+  100% { transform: scale(1.2) rotate(15deg); }
+}
+
+/* App Container (Full screen on mobile, centered card on desktop) */
+.app-container {
+  width: 100%;
+  max-width: 520px;
+  min-height: 100vh;
+  height: auto;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: relative;
+}
+@media (min-width: 768px) {
+  .app-container {
+    min-height: auto;
+    border: 1px solid var(--card-border);
+    border-radius: 32px;
+    box-shadow: var(--glass-shadow);
+  }
+}
+
+.app-content {
+  flex: 1;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.app-title {
+  font-size: 28px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.5px;
+}
+.app-header .material-icons-round {
+  color: var(--text-muted);
+  font-size: 28px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.app-header .material-icons-round:hover {
+  color: var(--text-main);
+  transform: rotate(45deg);
+}
+
+/* Connection Card */
+.conn-card {
+  background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15));
+  border: 1px solid rgba(139,92,246,0.3);
+  border-radius: 24px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(99,102,241,0.1);
+  transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.conn-card:hover { border-color: rgba(139,92,246,0.6); box-shadow: 0 15px 40px rgba(99,102,241,0.2); }
+.conn-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+.conn-icon {
+  width: 48px; height: 48px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 20px var(--primary-glow);
+}
+.conn-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.conn-status { font-size: 14px; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
+.status-dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 10px currentColor; }
+
+/* Code & QR */
+.code-display {
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(0,0,0,0.4); padding: 16px 20px; border-radius: 16px; border: 1px solid var(--card-border);
+  margin-bottom: 20px;
+}
+.code-display span { font-size: 14px; color: var(--text-muted); }
+.code-display b { font-size: 24px; letter-spacing: 4px; color: var(--primary); font-family: monospace; }
+.qr-container { display: flex; justify-content: center; margin-bottom: 20px; }
+.qr-box { background: white; padding: 12px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+
+/* Inputs */
+.connect-inputs { display: flex; gap: 12px; }
+.connect-input {
+  min-width: 0;
+  flex: 1; background: rgba(0,0,0,0.4); border: 1px solid var(--card-border);
+  border-radius: 16px; padding: 16px; color: white; font-size: 18px;
+  text-align: center; letter-spacing: 2px; outline: none; transition: 0.3s;
+}
+.connect-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99,102,241,0.2); }
+.connect-input::placeholder { color: rgba(255,255,255,0.2); font-size: 16px; letter-spacing: 1px; }
+
+.btn-primary {
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center; height: auto;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white; border: none; padding: 16px 24px; border-radius: 16px;
+  font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.3s;
+  box-shadow: 0 8px 20px var(--primary-glow);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 25px var(--primary-glow); }
+.btn-primary:active { transform: scale(0.96); }
+
+.btn-danger {
+  background: rgba(239, 68, 68, 0.1); color: var(--danger);
+  border: 1px solid rgba(239, 68, 68, 0.3); padding: 12px 24px; border-radius: 16px;
+  font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.3s;
+}
+.btn-danger:hover { background: var(--danger); color: white; box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4); }
+
+.conn-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+.conn-ip { font-family: monospace; font-size: 15px; color: var(--text-muted); }
+
+/* Quick Actions */
+.quick-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+@media (max-width: 380px) { .quick-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; } }
+.quick-btn {
+  background: rgba(255,255,255,0.03); border: 1px solid var(--card-border);
+  border-radius: 20px; padding: 20px 8px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  cursor: pointer; transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.quick-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); transform: translateY(-4px); }
+.quick-label { font-size: 13px; font-weight: 600; color: var(--text-main); }
+
+/* Storage Card & Transfer Overlay */
+.storage-card { background: rgba(0,0,0,0.3); border-radius: 24px; padding: 24px; border: 1px solid var(--card-border); }
+.storage-header { display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 15px; font-weight: 600; }
+.storage-header span:last-child { color: var(--primary); }
+.progress-container { width: 100%; height: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; overflow: hidden; margin-bottom: 16px; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); width: 0%; transition: width 0.3s ease; }
+
+/* Transfer Active Overlay */
+.transfer-overlay {
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(10,10,15,0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 100;
+  padding: 40px; text-align: center; border-radius: inherit;
+  animation: fadeIn 0.4s ease forwards;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.transfer-rings {
+  position: relative; width: 160px; height: 160px; margin-bottom: 32px;
+  display: flex; align-items: center; justify-content: center;
+}
+.ring {
+  position: absolute; border-radius: 50%; border: 2px solid transparent;
+}
+.ring-1 { width: 160px; height: 160px; border-top-color: var(--primary); animation: orbitalSpin 2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite; }
+.ring-2 { width: 130px; height: 130px; border-right-color: var(--secondary); animation: orbitalSpin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite reverse; }
+.ring-icon { font-size: 48px; color: white; filter: drop-shadow(0 0 15px var(--primary)); animation: pulseGlow 2s infinite alternate; }
+@keyframes orbitalSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes pulseGlow { 0% { transform: scale(0.9); opacity: 0.8; } 100% { transform: scale(1.1); opacity: 1; } }
+.transfer-title { font-size: 24px; font-weight: bold; margin-bottom: 8px; }
+.transfer-meta { font-size: 16px; color: var(--text-muted); margin-bottom: 32px; font-family: monospace; }
+.transfer-progress { font-size: 40px; font-weight: 800; color: var(--primary); margin-bottom: 40px; }
+
+/* Recent */
+.recent-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.recent-title { font-size: 20px; font-weight: bold; }
+.recent-list { display: flex; flex-direction: column; gap: 12px; }
+.recent-item {
+  background: rgba(0,0,0,0.3); border: 1px solid var(--card-border);
+  border-radius: 20px; padding: 16px; display: flex; align-items: center; gap: 16px;
+  transition: 0.3s;
+}
+.recent-item:hover { background: rgba(255,255,255,0.05); }
+.recent-icon { width: 48px; height: 48px; background: rgba(255,255,255,0.05); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--text-muted); }
+.recent-info { flex: 1; }
+.recent-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; word-break: break-all; }
+.recent-meta { font-size: 13px; color: var(--text-muted); }
+.recent-status { color: var(--success); font-size: 24px; }
+
+/* Modals */
+.modal-overlay {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
+  z-index: 999; display: flex; justify-content: center; align-items: center;
+  opacity: 0; pointer-events: none; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 24px; border-radius: inherit;
+}
+.modal-overlay.active { opacity: 1; pointer-events: all; }
+.modal-box {
+  background: #15151E; border: 1px solid rgba(255,255,255,0.1);
+  width: 100%; max-width: 440px; border-radius: 28px; padding: 32px;
+  display: flex; flex-direction: column; gap: 20px;
+  transform: translateY(40px); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+}
+.modal-overlay.active .modal-box { transform: translateY(0); }
+.modal-overlay .modal-header { 
+  display: flex; justify-content: space-between; align-items: center; 
+  background: transparent !important; border-bottom: none !important; padding: 0 !important; margin-bottom: 8px;
+}
+.modal-overlay .modal-header h3 { font-size: 20px; font-weight: bold; margin: 0; }
+.modal-overlay .modal-header .material-icons-round { cursor: pointer; color: var(--text-muted); font-size: 24px; }
+.modal-overlay .modal-header .material-icons-round:hover { color: white; }
+#modern-code-textarea {
+  width: 100%; height: 220px; background: rgba(0,0,0,0.5); color: #10B981;
+  font-family: monospace; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px;
+  padding: 20px; resize: none; outline: none; font-size: 15px; line-height: 1.5;
+}
+#modern-code-textarea:focus { border-color: var(--primary); }
+</style>
 </head>
-<body>
+<body data-theme="dark">
+<div class="bg-mesh"></div>
+
+<div class="app-wrapper">
+<div class="app-container">
+  <div class="app-content">
+    
+    <!-- Header -->
+    <div class="app-header">
+      <div class="app-title">SyncDrop</div>
+      <span class="material-icons-round" id="modern-settings-btn">settings</span>
+    </div>
+
+    <!-- Connection Card -->
+    <div class="conn-card" id="modern-conn-card">
+      <div class="conn-header">
+        <div class="conn-icon"><span class="material-icons-round" style="color:white;">devices</span></div>
+        <div>
+          <div class="conn-title" id="modern-peer-name">Not Connected</div>
+          <div class="conn-status">
+            <div class="status-dot" id="modern-status-dot" style="background:var(--danger)"></div>
+            <span id="modern-status-text">Waiting for connection...</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Disconnected State -->
+      <div id="modern-disconnected-state">
+        <div class="code-display">
+          <span>Your Code</span>
+          <b id="modern-my-code">------</b>
+        </div>
+        <div class="qr-container">
+          <div class="qr-box" id="modern-qr-code"></div>
+        </div>
+        <div class="connect-inputs">
+          <input type="text" id="modern-connect-input" class="connect-input" placeholder="ENTER CODE" maxlength="6">
+          <button class="btn-primary" id="modern-connect-btn">Connect</button>
+        </div>
+        <div style="text-align:center; margin-top:16px;">
+          <button class="btn-primary" id="modern-scan-qr-btn" style="background: rgba(255,255,255,0.1); width: 100%; border: 1px dashed rgba(255,255,255,0.3); color: white; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <span class="material-icons-round">qr_code_scanner</span>Scan QR
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Connected State -->
+      <div class="conn-footer" id="modern-connected-state" style="display:none;">
+        <div class="conn-ip" id="modern-peer-ip">192.168.x.x</div>
+        <button class="btn-danger" id="modern-disconnect-btn">Disconnect</button>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-grid">
+      <div class="quick-btn" id="modern-btn-photos">
+        <span class="material-icons-round" style="font-size:32px; color:#3B82F6;">image</span>
+        <div class="quick-label">Photos</div>
+      </div>
+      <div class="quick-btn" id="modern-btn-files">
+        <span class="material-icons-round" style="font-size:32px; color:#10B981;">description</span>
+        <div class="quick-label">Files</div>
+      </div>
+      <div class="quick-btn" id="modern-btn-folders">
+        <span class="material-icons-round" style="font-size:32px; color:#F59E0B;">folder</span>
+        <div class="quick-label">Folders</div>
+      </div>
+      <div class="quick-btn" id="modern-btn-clip">
+        <span class="material-icons-round" style="font-size:32px; color:#8B5CF6;">code</span>
+        <div class="quick-label">Text Share</div>
+      </div>
+    </div>
+
+    <!-- Storage Card -->
+    <div class="storage-card">
+      <div class="storage-header">
+        <span>Transfer Stats</span>
+        <span id="modern-transfer-stats">0 MB of 0 MB</span>
+      </div>
+      <div class="progress-container" id="modern-progress-fill">
+        <div class="progress-fill" id="modern-prog-bar"></div>
+      </div>
+    </div>
+
+    <!-- Recent Transfers -->
+    <div class="recent-header">
+      <div class="recent-title">Recent</div>
+    </div>
+    <div class="recent-list" id="modern-recent-list">
+      <!-- Populated by JS -->
+      <div class="recent-item" style="opacity: 0.5;">
+        <div class="recent-icon"><span class="material-icons-round">history</span></div>
+        <div class="recent-info">
+          <div class="recent-name">No recent transfers</div>
+          <div class="recent-meta">Transfer files to see them here</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Active Transfer Overlay -->
+  <div class="transfer-overlay" id="modern-transfer-overlay">
+    <div class="transfer-rings">
+      <div class="ring ring-1"></div>
+      <div class="ring ring-2"></div>
+      <span class="material-icons-round ring-icon">sync</span>
+    </div>
+    <div class="transfer-title" id="modern-transfer-overlay-title">Transferring...</div>
+    <div class="transfer-meta" id="modern-transfer-overlay-meta">Connecting</div>
+    <div class="transfer-progress" id="modern-transfer-overlay-pct">0%</div>
+    <button class="btn-danger" id="modern-cancel-btn" style="padding: 16px 32px; font-size: 16px; border-radius: 20px;">
+      <span class="material-icons-round" style="vertical-align: middle; margin-right: 8px;">cancel</span>Cancel Transfer
+    </button>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settings-modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Settings</h3>
+        <span class="material-icons-round" id="close-settings-modal">close</span>
+      </div>
+      <div style="font-size: 15px; color: var(--text-muted); line-height: 1.6;">
+        <p><b>SyncDrop</b> is a premium peer-to-peer file sharing application. All files are transferred securely via WebRTC DataChannels.</p>
+        <br>
+        <p>Your Device Code: <span style="color: var(--primary); font-family: monospace;"></span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Code Share Modal -->
+  <div class="modal-overlay" id="code-modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="code-modal-title">Share Text / Code</h3>
+        <span class="material-icons-round" id="close-code-modal">close</span>
+      </div>
+      <textarea id="modern-code-textarea" placeholder="Paste your code or text here..."></textarea>
+      <button id="modern-send-code-execute" class="btn-primary" style="padding: 16px;">Send Code</button>
+    </div>
+  </div>
+
+  <!-- QR Scanner Modal -->
+  <div class="modal-overlay" id="qr-modal-overlay">
+    <div class="modal-box" style="padding: 24px; padding-bottom: 32px;">
+      <div class="modal-header" style="margin-bottom: 24px;">
+        <h3 id="qr-modal-title">Scan QR Code</h3>
+        <span class="material-icons-round" id="close-qr-modal">close</span>
+      </div>
+      <div id="qr-reader" style="width:100%; border-radius:16px; overflow:hidden; background: black; display: none;"></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// Additional modern hooks for new features
+document.addEventListener("DOMContentLoaded", () => {
+    // Auto-connect if URL has ?code=XXXXXX (from native phone camera QR scan)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlCode = urlParams.get('code');
+    if (urlCode && urlCode.length === 6) {
+        setTimeout(() => {
+            document.getElementById('modern-connect-input').value = urlCode.toUpperCase();
+            document.getElementById('modern-connect-btn').click();
+            // Clear URL so it doesn't try to reconnect on refresh
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }, 500); // Small delay to let peer init
+    }
+
+    // Generate QR Code once the code is available
+    const checkCode = setInterval(() => {
+        const code = document.getElementById('modern-my-code').innerText;
+        if (code && code !== '------') {
+            clearInterval(checkCode);
+            try {
+                new QRCode(document.getElementById("modern-qr-code"), {
+                    text: window.location.href.split('?')[0] + '?code=' + code,
+                    width: 140,
+                    height: 140,
+                    colorDark : "#0a0a0f",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.L
+                });
+            } catch(e) {}
+        }
+    }, 1000);
+
+    // Cancel Button
+    document.getElementById('modern-cancel-btn').addEventListener('click', () => {
+        if (typeof cancelTransfer === 'function') cancelTransfer();
+        document.getElementById('modern-transfer-overlay').style.display = 'none';
+    });
+
+    // Settings Modal
+    document.getElementById('modern-settings-btn').addEventListener('click', () => {
+        document.getElementById('settings-modal-overlay').classList.add('active');
+    });
+    document.getElementById('close-settings-modal').addEventListener('click', () => {
+        document.getElementById('settings-modal-overlay').classList.remove('active');
+    });
+
+    // Ensure modern-progress-fill updates inner modern-prog-bar
+    const origStats = document.getElementById('modern-progress-fill');
+    if(origStats) {
+        Object.defineProperty(origStats.style, 'width', {
+            set: function(val) {
+                const bar = document.getElementById('modern-prog-bar');
+                if(bar) bar.style.width = val;
+                
+                // Show overlay if transfer active
+                const overlay = document.getElementById('modern-transfer-overlay');
+                if (val !== '100%' && val !== '0%') {
+                    if (overlay.style.display !== 'flex') overlay.style.display = 'flex';
+                    document.getElementById('modern-transfer-overlay-pct').innerText = val;
+                    const stats = document.getElementById('modern-transfer-stats').innerText;
+                    document.getElementById('modern-transfer-overlay-meta').innerText = stats;
+                } else if (val === '100%') {
+                    setTimeout(() => overlay.style.display = 'none', 1000);
+                }
+            }
+        });
+    }
+
+    // QR Scanner
+    document.getElementById('modern-scan-qr-btn').addEventListener('click', () => {
+        const qrModal = document.getElementById('qr-modal-overlay');
+        qrModal.classList.add('active');
+        const qrReader = document.getElementById('qr-reader');
+        qrReader.style.display = 'block';
+        window.html5QrCode = new Html5Qrcode("qr-reader");
+        window.html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
+            (decodedText) => {
+                window.html5QrCode.stop().catch(()=>{});
+                qrModal.classList.remove('active');
+                qrReader.style.display = 'none';
+                try {
+                    const url = new URL(decodedText);
+                    const code = url.searchParams.get('code');
+                    if (code) {
+                        document.getElementById('modern-connect-input').value = code;
+                        document.getElementById('modern-connect-btn').click();
+                    } else if (decodedText.length === 6) {
+                        document.getElementById('modern-connect-input').value = decodedText;
+                        document.getElementById('modern-connect-btn').click();
+                    }
+                } catch(e) {
+                    if (decodedText.length === 6) {
+                        document.getElementById('modern-connect-input').value = decodedText;
+                        document.getElementById('modern-connect-btn').click();
+                    }
+                }
+            },
+            (err) => {}
+        ).catch(err => {
+            alert("Camera access denied or unavailable.");
+            qrModal.classList.remove('active');
+            qrReader.style.display = 'none';
+        });
+    });
+
+    document.getElementById('close-qr-modal').addEventListener('click', () => {
+        document.getElementById('qr-modal-overlay').classList.remove('active');
+        if (window.html5QrCode) {
+            window.html5QrCode.stop().catch(()=>{});
+        }
+    });
+});
+</script>
+
+<div id="legacy-ui">
+
 
 <header class="app-bar">
   <div class="brand">
@@ -362,6 +911,9 @@ body::before {
   </div>
   <div class="header-actions">
     <div class="app-bar-chip">SECURE P2P</div>
+    <button class="coffee-btn" onclick="openSettings()" title="Network Settings" style="color: var(--primary); border-color: var(--primary-light);">
+      <span class="material-icons-round">router</span>
+    </button>
     <button class="coffee-btn" onclick="openAbout()" title="Support & About">
       <span class="material-icons-round">local_cafe</span>
       <span class="coffee-text">Buy me a Coffee</span>
@@ -663,6 +1215,55 @@ body::before {
   </div>
 </div>
 
+<!-- Settings Modal -->
+<div class="modal-backdrop" id="settings-modal" onclick="if(event.target===this)closeSettings()">
+  <div class="modal-surface">
+    <div class="modal-header">
+      <h3 class="modal-title"><span class="material-icons-round">router</span> Network Settings</h3>
+      <button class="modal-close" onclick="closeSettings()"><span class="material-icons-round">close</span></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:14px; color:var(--text-muted); line-height:1.6; margin-top:0;">
+        If you are having trouble connecting over mobile data or strict networks, provide a custom TURN server API key to securely relay your connection.
+      </p>
+      <div style="background:#F8FAFC; padding:16px; border-radius:var(--radius-sm); border:1px solid rgba(0,0,0,0.06); margin-top:8px;">
+        <label style="font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:8px; display:block;">Signaling Server URL (Optional)</label>
+        <input type="text" id="signaling-url" class="md-text-input" style="height:48px; font-size:14px; letter-spacing:1px; text-align:left; padding:0 16px; margin-bottom: 16px;" placeholder="e.g. my-server.onrender.com">
+        
+        <label style="font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:8px; display:block;">Metered.ca API Key (TURN)</label>
+        <input type="text" id="turn-api-key" class="md-text-input" style="height:48px; font-size:14px; letter-spacing:1px; text-align:left; padding:0 16px;" placeholder="Paste API key here...">
+        <div style="font-size:12px; color:var(--text-muted); margin-top:12px;">
+          Get a free 50GB/mo key at <a href="https://metered.ca/stun-turn" target="_blank" style="color:var(--primary); font-weight:600; text-decoration:none;">metered.ca</a>
+        </div>
+      </div>
+      <button class="md-btn md-btn-filled md-btn-full" onclick="saveSettings()" style="margin-top:16px;" id="save-settings-btn">
+        <span class="material-icons-round">save</span> SAVE SETTINGS
+      </button>
+    </div>
+  </div>
+</div>
+
+
+</div>
+
+<script>
+// --- UI TOGGLES LOGIC ---
+document.getElementById('theme-toggle').addEventListener('click', e => {
+  if(e.target.tagName==='BUTTON') {
+    document.querySelectorAll('#theme-toggle .toggle-btn').forEach(b=>b.classList.remove('active'));
+    e.target.classList.add('active');
+    document.body.setAttribute('data-theme', e.target.dataset.val);
+  }
+});
+document.getElementById('view-toggle').addEventListener('click', e => {
+  if(e.target.tagName==='BUTTON') {
+    document.querySelectorAll('#view-toggle .toggle-btn').forEach(b=>b.classList.remove('active'));
+    e.target.classList.add('active');
+    document.body.setAttribute('data-mode', e.target.dataset.val);
+  }
+});
+</script>
+
 <script>
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║            SYNCDROP — GOD MODE ENGINE v2.0                      ║
@@ -684,42 +1285,15 @@ const MAX_SIZE = 500 * 1024 * 1024;
 
 // ── GOD MODE: 256KB chunks = optimal for Chromium DataChannel
 // Chrome's SCTP implementation fragments at 256KB; larger = kernel drops
-const CHUNK_SIZE = 256 * 1024;
+const CHUNK_SIZE = 16 * 1024;
 
 // bufferedAmountLowThreshold: drain below 2MB before sending more
 // This prevents DataChannel queue overflow on slow networks
 const BUFFER_LOW  = 512 * 1024;   // Resume threshold: 512KB
-const BUFFER_HIGH = 4 * 1024 * 1024; // Pause threshold: 4MB
+const BUFFER_HIGH = 1 * 1024 * 1024; // Pause threshold: 4MB
 
 // ── GOD MODE ICE CONFIG GENERATOR ───────────────────────────────────
-function getPeerConfig() {
-  const customKey = localStorage.getItem('syncdrop_turn_key');
-  
-  // If user provided a custom API key, use Metered's TURN + Custom STUN
-  if (customKey && customKey.trim().length > 5) {
-    const key = customKey.trim();
-    return {
-      debug: 2,
-      config: {
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun.cloudflare.com:3478' },
-          {
-            urls: [
-              `turn:${key}.relay.metered.ca:80`,
-              `turn:${key}.relay.metered.ca:443`,
-              `turn:${key}.relay.metered.ca:443?transport=tcp`
-            ],
-            username: key,
-            credential: key
-          }
-        ]
-      }
-    };
-  }
-
-  // DEFAULT BEHAVIOR (Matches beta.html)
-  // Include standard STUN servers to fix local network (mDNS) issues between mobile and desktop
+async function getPeerConfig() {
   return {
     debug: 2,
     config: {
@@ -794,7 +1368,7 @@ function handleFileSelect(files){
     if(!selectedFiles.some(f=>f.name===file.name&&f.size===file.size))selectedFiles.push(file);
   });
   updateFilePreviewList();
-  cancelTransfer();
+  
 }
 
 function updateFilePreviewList(){
@@ -841,9 +1415,10 @@ function copyShareLink(btnId,isCodeTab=false){
 // ── GOD MODE: PEER FACTORY ────────────────────────────────────────────
 // Uses PeerJS cloud with explicit config, 30s timeout, auto-retry on id collision
 function initPeer(customId){
-  return new Promise((resolve,reject)=>{
+  return new Promise(async (resolve,reject)=>{
     const id=customId||genCode();
-    const peer=new Peer(id,getPeerConfig());
+    const config = await getPeerConfig();
+    const peer=new Peer(id,config);
     let resolved=false;
 
     const timeout=setTimeout(()=>{
@@ -923,30 +1498,51 @@ function _attachIce(pc,bannerElId,textElId,diagIceId,statusFn){
 function cancelTransfer(){
   transferActive=false;
   if(diagInterval){clearInterval(diagInterval);diagInterval=null;}
-  if(myPeer){try{myPeer.destroy();}catch(e){}myPeer=null;}
-  if(receiverPeer){try{receiverPeer.destroy();}catch(e){}receiverPeer=null;}
-  activeConnections.forEach(c=>{try{c.close();}catch(e){}});activeConnections=[];
+  
+  // Send cancel signal to peers
+  if(typeof activeConnections !== 'undefined') {
+      activeConnections.forEach(conn => {
+          if(conn.open) {
+              try { conn.send(JSON.stringify({ type: 'cancel-transfer' })); } catch(e) {}
+          }
+      });
+  }
+
   const btn=document.getElementById('send-start-btn');
-  btn.disabled=false;btn.className='md-btn md-btn-filled md-btn-full';
-  btn.innerHTML='<span class="material-icons-round">rocket_launch</span> GENERATE SYNC LINK';
-  document.getElementById('share-active-area').classList.add('hidden');
-  document.getElementById('send-viz').classList.add('hidden');
-  document.getElementById('send-status-row').className='md-status info';
-  document.getElementById('send-status-text').textContent='Waiting for receiver to connect…';
-  document.getElementById('send-ice-banner').classList.add('hidden');
-  document.getElementById('send-diag').classList.add('hidden');
+  if(btn){
+    btn.disabled=false;btn.className='md-btn md-btn-filled md-btn-full';
+    btn.innerHTML='<span class="material-icons-round">rocket_launch</span> GENERATE SYNC LINK';
+  }
+  
+  const shareEl = document.getElementById('share-active-area'); if(shareEl) shareEl.classList.add('hidden');
+  const vizEl = document.getElementById('send-viz'); if(vizEl) vizEl.classList.add('hidden');
+  const statRow = document.getElementById('send-status-row'); if(statRow) statRow.className='md-status info';
+  const statText = document.getElementById('send-status-text'); if(statText) statText.textContent='Waiting for receiver to connect…';
+  const iceBanner = document.getElementById('send-ice-banner'); if(iceBanner) iceBanner.classList.add('hidden');
+  const diagEl = document.getElementById('send-diag'); if(diagEl) diagEl.classList.add('hidden');
   qrGenerated=false;
-  document.getElementById('recv-file-card').classList.add('hidden');
-  document.getElementById('receive-status').classList.add('hidden');
-  document.getElementById('recv-ice-banner').classList.add('hidden');
-  document.getElementById('recv-diag').classList.add('hidden');
-  document.getElementById('recv-success').classList.remove('visible');
-  document.getElementById('recv-files-list').innerHTML='';
-  document.getElementById('recv-files-list').classList.add('hidden');
-  document.getElementById('recv-single-save-btn').classList.add('hidden');
+  
+  const fileCard = document.getElementById('recv-file-card'); if(fileCard) fileCard.classList.add('hidden');
+  const rcvStatus = document.getElementById('receive-status'); if(rcvStatus) rcvStatus.classList.add('hidden');
+  const rcvIce = document.getElementById('recv-ice-banner'); if(rcvIce) rcvIce.classList.add('hidden');
+  const rcvDiag = document.getElementById('recv-diag'); if(rcvDiag) rcvDiag.classList.add('hidden');
+  const rcvSucc = document.getElementById('recv-success'); if(rcvSucc) rcvSucc.classList.remove('visible');
+  const rcvList = document.getElementById('recv-files-list'); if(rcvList) { rcvList.innerHTML=''; rcvList.classList.add('hidden'); }
+  const saveBtn = document.getElementById('recv-single-save-btn'); if(saveBtn) saveBtn.classList.add('hidden');
+  
   setRing('send-ring',0);setRing('recv-ring',0);
-  document.getElementById('send-pct').textContent='0%';document.getElementById('recv-pct').textContent='0%';
-  document.getElementById('send-lbl').textContent='UPLOADING';document.getElementById('recv-lbl').textContent='DOWNLOADING';
+  const sPct = document.getElementById('send-pct'); if(sPct) sPct.textContent='0%';
+  const rPct = document.getElementById('recv-pct'); if(rPct) rPct.textContent='0%';
+  const sLbl = document.getElementById('send-lbl'); if(sLbl) sLbl.textContent='UPLOADING';
+  const rLbl = document.getElementById('recv-lbl'); if(rLbl) rLbl.textContent='DOWNLOADING';
+
+  // Modern UI specific reset
+  const overlay = document.getElementById('modern-transfer-overlay');
+  if(overlay) overlay.style.display = 'none';
+  const progFill = document.getElementById('modern-progress-fill');
+  if(progFill) progFill.style.width = '0%';
+  const statsText = document.getElementById('modern-transfer-stats');
+  if(statsText) statsText.textContent = '0 MB of 0 MB';
 }
 
 // ── PARTICLE STREAM ───────────────────────────────────────────────────
@@ -1063,49 +1659,39 @@ function setSendStatus(type,text){
 function sendInChunks(conn){
   const files=selectedFiles;
   const totalSize=files.reduce((a,f)=>a+f.size,0);
-  let totalSent=0,lastTime=Date.now(),lastTotalSent=0,chunksSent=0;
+  let totalSent=0,lastTime=Date.now(),lastTotalSent=0;
   const stopStream=startDataStream('send-canvas','send');
   transferActive=true;
 
+  let diagInterval=null;
+
+  function updateUI(sent,total){
+    const now=Date.now(), elapsed=(now-lastTime)/1000, pct=Math.min(100,Math.round((sent/total)*100));
+    setRing('send-ring',pct);
+    document.getElementById('send-pct').textContent=pct+'%';
+    document.getElementById('send-sent').textContent=fmtBytes(sent);
+    
+    // Modern UI Hooks
+    const modernStats = document.getElementById('modern-transfer-stats');
+    if(modernStats) modernStats.textContent = `${fmtBytes(sent)} of ${fmtBytes(total)}`;
+    const modernProgress = document.getElementById('modern-progress-fill');
+    if(modernProgress) modernProgress.style.width = pct + '%';
+    
+    if(elapsed>=0.5){
+      const speed=elapsed>0?(sent-lastTotalSent)/elapsed:0,remaining=total-sent;
+      document.getElementById('send-speed').textContent=fmtSpeed(speed);
+      document.getElementById('send-eta').textContent=fmtEta(speed>0?remaining/speed:Infinity);
+      lastTotalSent=sent;lastTime=now;
+    }
+  }
+
   // Get the raw RTCDataChannel for bufferedAmount monitoring
-  // conn.dataChannel is set by PeerJS after open
   let dc=null;
   
-  // Diagnostic updater
-  diagInterval=setInterval(()=>{
-    if(!dc)return;
-    const bufEl=document.getElementById('diag-send-buf');
-    const chanEl=document.getElementById('diag-send-chan');
-    const chEl=document.getElementById('diag-send-chunks');
-    if(bufEl)bufEl.textContent=fmtBytes(dc.bufferedAmount||0);
-    if(chanEl)chanEl.textContent=dc.readyState||'—';
-    if(chEl)chEl.textContent=chunksSent;
-  },500);
-
   // Send control message as JSON string
   function ctrl(obj){conn.send(JSON.stringify(obj));}
 
   ctrl({type:'batch-meta',count:files.length,totalSize,files:files.map(f=>({name:f.name,size:f.size,mime:f.type}))});
-
-  let lastPctTime=0, lastPctVal=-1;
-  function updateUI(sent,total){
-    const now=Date.now(), elapsed=(now-lastTime)/1000, pct=Math.min(100,Math.round((sent/total)*100));
-    if(now - lastPctTime > 40 || pct === 100){
-      if(pct !== lastPctVal){
-        setRing('send-ring',pct);
-        getCachedEl('send-pct').textContent=pct+'%';
-        lastPctVal = pct;
-      }
-      getCachedEl('send-sent').textContent=fmtBytes(sent);
-      lastPctTime = now;
-    }
-    if(elapsed>=0.5){
-      const speed=elapsed>0?(sent-lastTotalSent)/elapsed:0,remaining=total-sent;
-      getCachedEl('send-speed').textContent=fmtSpeed(speed);
-      getCachedEl('send-eta').textContent=fmtEta(speed>0?remaining/speed:Infinity);
-      lastTotalSent=sent;lastTime=now;
-    }
-  }
 
   function waitDrain(dataChannel){
     return new Promise(resolve=>{
@@ -1132,52 +1718,47 @@ function sendInChunks(conn){
     });
   }
 
-  async function sendFile(file,fileIndex){
-    ctrl({type:'file-start',index:fileIndex,name:file.name,size:file.size,mime:file.type});
-    
-    let offset=0,localChunks=0;
-    dc=conn.dataChannel;
-
-    while(offset<file.size){
-      if(!transferActive||!conn.open)return false;
-      // GOD MODE backpressure: pause if buffer is too full
-      if(dc&&dc.bufferedAmount>BUFFER_HIGH){
-        await waitDrain(dc);
-        if(!transferActive||!conn.open)return false;
-      }
-      
-      const slice = file.slice(offset, offset + CHUNK_SIZE);
-      const chunk = await readSlice(slice);
-      
-      // GOD MODE: send raw ArrayBuffer — no JSON wrapper
-      conn.send(chunk);
-      offset+=chunk.byteLength;totalSent+=chunk.byteLength;chunksSent++;localChunks++;
-      updateUI(totalSent,totalSize);
-      // Yield to event loop every 16 chunks (not every chunk!) 
-      if(localChunks%16===0)await new Promise(r=>setTimeout(r,0));
-    }
-    ctrl({type:'file-end',index:fileIndex});
-    return true;
-  }
-
   async function sendAll(){
-    for(let i=0;i<files.length;i++){
-      setSendStatus('info',`Sending file ${i+1} of ${files.length}… (${files[i].name})`);
-      const ok=await sendFile(files[i],i);
-      if(!ok)return;
-      await new Promise(r=>setTimeout(r,50));
+    try {
+      dc=conn.dataChannel;
+      for(let i=0;i<files.length;i++){
+        const file=files[i];
+        setSendStatus('info',`Sending file ${i+1} of ${files.length}… (${file.name})`);
+        ctrl({type:'file-start',name:file.name,size:file.size,mime:file.type});
+        
+        let offset=0;
+        while(offset<file.size&&transferActive){
+          if(dc&&dc.bufferedAmount>BUFFER_HIGH){
+            setSendStatus('warn','Network congested, pausing upload…');
+            await waitDrain(dc);
+            setSendStatus('info',`Sending file ${i+1} of ${files.length}… (${file.name})`);
+          }
+          const end=Math.min(offset+CHUNK_SIZE,file.size);
+          const chunk=await readSlice(file.slice(offset,end));
+          conn.send(chunk);
+          offset+=chunk.byteLength;
+          totalSent+=chunk.byteLength;
+          
+          if(offset===file.size || offset%(CHUNK_SIZE*16)===0){
+            updateUI(totalSent,totalSize);
+            await new Promise(r=>setTimeout(r,0));
+          }
+        }
+        ctrl({type:'file-end'});
+        if(!transferActive)break;
+      }
+      if(transferActive){
+        ctrl({type:'batch-done'});
+        finishSendBatch(stopStream,totalSize);
+      }
+    } catch(err){
+      console.error('Send error:',err);
+      setSendStatus('error','Transfer error: '+err.message);
+      stopStream();
     }
-    ctrl({type:'batch-done'});
-    clearInterval(diagInterval);diagInterval=null;
-    finishSendBatch(stopStream,totalSize);
   }
 
-  sendAll().catch(err=>{
-    console.error('Send error:',err);
-    setSendStatus('error','Transfer error: '+err.message);
-    clearInterval(diagInterval);diagInterval=null;
-    stopStream();
-  });
+  sendAll();
 }
 
 function finishSendBatch(stopStream,totalSize){
@@ -1185,6 +1766,21 @@ function finishSendBatch(stopStream,totalSize){
   setRing('send-ring',100);
   document.getElementById('send-pct').textContent='100%';document.getElementById('send-lbl').textContent='DONE';
   document.getElementById('send-eta').textContent='0s';
+  setSendStatus('success',`Sent ${selectedFiles.length} files successfully.`);
+  
+  // Modern UI Recent List
+  const list = document.getElementById('modern-recent-list');
+  if(list && selectedFiles.length > 0) {
+      if(list.children[0] && list.children[0].innerText.includes('No recent')) list.innerHTML = '';
+      list.innerHTML = `<div class="recent-item">
+        <div class="recent-icon"><span class="material-icons-round">upload_file</span></div>
+        <div class="recent-info">
+          <div class="recent-name">Sent ${selectedFiles.length} File(s)</div>
+          <div class="recent-meta">Just now · ${fmtBytes(totalSize)}</div>
+        </div>
+        <div class="recent-status"><span class="material-icons-round">check_circle</span></div>
+      </div>` + list.innerHTML;
+  }
   document.getElementById('send-cancel-btn').classList.add('hidden');document.getElementById('send-stats').classList.add('hidden');
   document.getElementById('send-viz').querySelector('.hub-container').classList.add('hidden');
   document.getElementById('send-success').classList.add('visible');
@@ -1192,19 +1788,20 @@ function finishSendBatch(stopStream,totalSize){
 }
 
 // ── GOD MODE: RECEIVE FILE FLOW ───────────────────────────────────────
-function connectToSender(){
+async function connectToSender(){
   const code=document.getElementById('receive-code').value.trim().toUpperCase();
   if(!code||code.length<6){setRecvStatus('warn','Enter a valid 6-digit code.');return;}
   setRecvStatus('info','Connecting to sender…');
   if(receiverPeer){try{receiverPeer.destroy();}catch(e){}}
   
-  receiverPeer=new Peer(getPeerConfig());
+  const config = await getPeerConfig();
+  receiverPeer=new Peer(config);
 
   receiverPeer.on('open',myId=>{
     console.log('[SyncDrop] Receiver peer opened, connecting to:',code);
     // GOD MODE: serialization:'binary' ensures ArrayBuffer passthrough
     // without this, PeerJS base64-encodes ArrayBuffers on some browsers!
-    const conn=receiverPeer.connect(code,{reliable:true,serialization:'binary'});
+    const conn=receiverPeer.connect(code,{reliable:true});
     if(!conn){setRecvStatus('error','Failed to initiate connection.');return;}
     activeConnections.push(conn);
     monitorIceState(conn,'recv-ice-banner','recv-ice-text','diag-recv-ice',(t,m)=>setRecvStatus(t,m));
@@ -1298,34 +1895,48 @@ function listenForFile(conn){
 
   conn.on('data',msg=>{
     if(!msg)return;
-    // GOD MODE: binary protocol dispatch
     if(typeof msg==='string'){
-      // Control message
       let obj;try{obj=JSON.parse(msg);}catch(e){return;}
-      if(obj.type==='batch-meta'){
+      if(obj.type==='code-share'){ window.dispatchEvent(new CustomEvent('code-share-received', {detail: obj.content})); }
+      else if(obj.type==='cancel-transfer'){
+        // Abort transfer but keep connection
+        currentFileChunks = [];
+        receivedFiles = [];
+        totalBatchReceived = 0;
+        const overlay = document.getElementById('modern-transfer-overlay');
+        if(overlay) overlay.style.display = 'none';
+        const progFill = document.getElementById('modern-progress-fill');
+        if(progFill) progFill.style.width = '0%';
+        const statsText = document.getElementById('modern-transfer-stats');
+        if(statsText) statsText.textContent = '0 MB of 0 MB';
+        alert("Transfer was cancelled by the sender.");
+      }
+      else if(obj.type==='batch-meta'){ 
         receivedBatchMeta=obj;totalBatchSize=obj.totalSize||1;
-        const diagEl=document.getElementById('diag-recv-chan');if(diagEl)diagEl.textContent='open';
-        console.log('[SyncDrop] Batch meta:',obj.count,'files',fmtBytes(totalBatchSize));
       } else if(obj.type==='file-start'){
         currentFileMeta=obj;currentFileChunks=[];
-        console.log('[SyncDrop] File start:',obj.name,fmtBytes(obj.size));
       } else if(obj.type==='file-end'){
         if(currentFileMeta){pendingProcessing++;processFile({...currentFileMeta},[...currentFileChunks]);currentFileChunks=[];currentFileMeta=null;}
       } else if(obj.type==='batch-done'){
         batchDoneReceived=true;checkFinish();
       }
     } else {
-      // Raw ArrayBuffer chunk — the hot path
+      // Raw ArrayBuffer chunk
       let data;
       if(msg instanceof ArrayBuffer) data=msg;
       else if(msg instanceof Uint8Array) data=msg.buffer.slice(msg.byteOffset,msg.byteOffset+msg.byteLength);
       else if(msg.buffer) data=msg.buffer;
-      else {console.warn('Unknown chunk type:',typeof msg);return;}
+      else return;
       
       currentFileChunks.push(data);
       totalBatchReceived+=data.byteLength;
-      chunkCount++;
       updateUI(totalBatchReceived,totalBatchSize);
+      
+      // Update Modern UI Stats
+      const modernStats = document.getElementById('modern-transfer-stats');
+      if(modernStats) modernStats.textContent = `${fmtBytes(totalBatchReceived)} of ${fmtBytes(totalBatchSize || totalBatchReceived)}`;
+      const modernProgress = document.getElementById('modern-progress-fill');
+      if(modernProgress) modernProgress.style.width = Math.min(100, Math.round((totalBatchReceived/totalBatchSize)*100)) + '%';
     }
   });
 
@@ -1372,6 +1983,29 @@ function finishReceiveBatch(stopStream){
     });
   }
   document.getElementById('recv-success').classList.add('visible');
+  
+  // Modern UI Recent List
+  const list = document.getElementById('modern-recent-list');
+  if(list && receivedFiles.length > 0) {
+      if(list.children[0] && list.children[0].innerText.includes('No recent')) list.innerHTML = '';
+      
+      // Add each received file with a download button
+      receivedFiles.forEach((file, index) => {
+        const item = document.createElement('div');
+        item.className = 'recent-item';
+        item.innerHTML = `
+          <div class="recent-icon"><span class="material-icons-round">download</span></div>
+          <div class="recent-info">
+            <div class="recent-name">${file.name}</div>
+            <div class="recent-meta">Received · ${fmtBytes(file.size)}</div>
+          </div>
+          <button class="md-btn md-btn-filled" style="height:32px; border-radius:16px; font-size:12px; padding:0 16px; min-width:80px; margin-left:12px; background:var(--primary);" onclick="downloadBatchFile(${index})">
+            Save
+          </button>
+        `;
+        list.insertBefore(item, list.firstChild);
+      });
+  }
 }
 
 function downloadFile(){if(!receivedFiles.length)return;const f=receivedFiles[0],a=document.createElement('a');a.href=f.url;a.download=f.name;document.body.appendChild(a);a.click();document.body.removeChild(a);}
@@ -1411,17 +2045,30 @@ function closeAbout(){document.getElementById('about-modal').classList.remove('o
 
 // ── SETTINGS MODAL ────────────────────────────────────────────────────
 function openSettings(){
-  const key = localStorage.getItem('syncdrop_turn_key') || '';
-  document.getElementById('turn-api-key').value = key;
+  let turnKey = '';
+  let sigUrl = '';
+  try {
+    turnKey = localStorage.getItem('syncdrop_turn_key') || '';
+    sigUrl = localStorage.getItem('syncdrop_sig_url') || '';
+  } catch(e) {}
+  document.getElementById('turn-api-key').value = turnKey;
+  document.getElementById('signaling-url').value = sigUrl;
   document.getElementById('settings-modal').classList.add('open');
 }
 function closeSettings(){
   document.getElementById('settings-modal').classList.remove('open');
 }
 function saveSettings(){
-  const key = document.getElementById('turn-api-key').value.trim();
-  if(key) localStorage.setItem('syncdrop_turn_key', key);
-  else localStorage.removeItem('syncdrop_turn_key');
+  const turnKey = document.getElementById('turn-api-key').value.trim();
+  const sigUrl = document.getElementById('signaling-url').value.trim();
+  try {
+    if(turnKey) localStorage.setItem('syncdrop_turn_key', turnKey);
+    else localStorage.removeItem('syncdrop_turn_key');
+    if(sigUrl) localStorage.setItem('syncdrop_sig_url', sigUrl);
+    else localStorage.removeItem('syncdrop_sig_url');
+  } catch(e) {
+    alert("Warning: Your browser is blocking settings from being saved because you opened the file directly (file://). Please host the app on Netlify or a local server to save settings permanently!");
+  }
   
   const btn = document.getElementById('save-settings-btn');
   btn.innerHTML = '<span class="material-icons-round">check</span> SAVED!';
@@ -1490,12 +2137,13 @@ async function startCodeShare(){
   });
 }
 
-function connectForCode(){
+async function connectForCode(){
   const code=document.getElementById('code-recv-input').value.trim().toUpperCase();
   if(!code||code.length<6){setCodeRecvStatus('warn','Enter a valid 6-digit code.');return;}
   setCodeRecvStatus('info','Connecting…');
   if(codeRecvPeer){try{codeRecvPeer.destroy();}catch(e){}}
-  codeRecvPeer=new Peer(getPeerConfig());
+  const config = await getPeerConfig();
+  codeRecvPeer=new Peer(config);
   codeRecvPeer.on('open',()=>{
     const conn=codeRecvPeer.connect(code,{reliable:true,serialization:'json'});
     conn.on('open',()=>setCodeRecvStatus('info','Connected! Fetching code…'));
@@ -1551,6 +2199,342 @@ window.addEventListener('load',()=>{
     else{switchTab('receive');document.getElementById('receive-code').value=code.toUpperCase();}
   }
 });
+</script>
+<script>
+
+
+
+
+// --- MODERN UI BINDINGS ---
+// Sync transfer stats to the modern UI
+setInterval(() => {
+    // Attempt to sync the progress bars
+    try {
+        const sendPct = document.getElementById('send-pct').textContent;
+        const recvPct = document.getElementById('recv-pct').textContent;
+        const sendVal = parseInt(sendPct) || 0;
+        const recvVal = parseInt(recvPct) || 0;
+        
+        document.getElementById('modern-stats-sent').style.width = sendVal + '%';
+        document.getElementById('modern-stats-recv').style.width = recvVal + '%';
+        
+        // Try to guess the MB if available
+        let sentText = document.getElementById('send-lbl').textContent;
+        let recvText = document.getElementById('recv-lbl').textContent;
+        if(sendVal > 0) document.querySelector('.modern-stats-bar').parentElement.querySelector('.modern-stats-header').innerHTML = `<div class="modern-stats-title">Sending...</div><div class="modern-stats-values">${sendVal}%</div>`;
+        if(recvVal > 0) document.querySelector('.modern-stats-bar').parentElement.querySelector('.modern-stats-header').innerHTML = `<div class="modern-stats-title">Receiving...</div><div class="modern-stats-values">${recvVal}%</div>`;
+    } catch(e) {}
+}, 500);
+
+
+
+// Override finishReceiveBatch to show received files in the new UI!
+const origFinishReceiveBatch = typeof finishReceiveBatch === 'function' ? finishReceiveBatch : () => {};
+window.finishReceiveBatch = function(stopStream) {
+    origFinishReceiveBatch(stopStream);
+    
+    // Now add them to the Modern UI Recent List!
+    const list = document.getElementById('modern-recent-list');
+    if(list && list.children[0] && list.children[0].innerText.includes('No recent')) list.innerHTML = '';
+    
+    // We can just add the most recent batch of files
+    if(typeof receivedFiles !== 'undefined' && receivedFiles.length > 0) {
+        receivedFiles.forEach((file, index) => {
+            // Check if it's already in the list by name, or just add it
+            const id = 'recv-' + Date.now() + '-' + index;
+            const htmlStr = `<div class="recent-item">
+              <div class="recent-icon"><span class="material-icons-round">insert_drive_file</span></div>
+              <div class="recent-info">
+                <div class="recent-name">${file.name}</div>
+                <div class="recent-meta">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+              </div>
+              <button class="btn-glass" style="padding: 4px 12px; font-size: 11px;" onclick="downloadBatchFile(${index})">Save</button>
+            </div>`;
+            if(list) list.innerHTML = htmlStr + list.innerHTML;
+        });
+    }
+};
+
+
+// Override setRecvStatus to show alerts for errors so we aren't blind
+const origSetRecvStatus = typeof setRecvStatus === 'function' ? setRecvStatus : () => {};
+window.setRecvStatus = function(type, text) {
+    origSetRecvStatus(type, text);
+    if(type === 'error') {
+        alert("Connection Error: " + text);
+        document.getElementById('modern-connect-btn').textContent = 'Connect';
+    } else if (type === 'warn') {
+        console.warn("Connection warning:", text);
+    }
+};
+
+// Completely rewrite connectToSender for the unified architecture
+window.connectToSender = function() {
+    const code = document.getElementById('modern-connect-input').value.trim().toUpperCase();
+    if(!code || code.length < 6) {
+        alert('Enter a valid 6-digit code.');
+        return;
+    }
+    
+    document.getElementById('modern-connect-btn').innerHTML = '<div class="logo-spinner"></div>';
+    
+    if(!window.myPeer) {
+        alert("Peer not initialized yet. Wait a moment.");
+        document.getElementById('modern-connect-btn').textContent = 'Connect';
+        return;
+    }
+
+    console.log('[SyncDrop] Unified connecting to:', code);
+    const conn = window.myPeer.connect(code, {reliable:true});
+    if(!conn) {
+        alert('Failed to initiate connection.');
+        document.getElementById('modern-connect-btn').textContent = 'Connect';
+        return;
+    }
+    
+    activeConnections.push(conn);
+    
+    // We should also listen for files coming BACK to us on this connection!
+    conn.on('open', () => {
+        console.log('[SyncDrop] Unified DataChannel open!');
+        document.getElementById('modern-connect-btn').textContent = 'Connected!';
+        if(typeof listenForFile === 'function') listenForFile(conn);
+    });
+    
+    conn.on('error', err => {
+        alert("Connection error: " + (err.message || err.type));
+        document.getElementById('modern-connect-btn').textContent = 'Connect';
+    });
+    
+    const openTimeout = setTimeout(() => {
+        if(!conn.open) {
+            alert('Connection timed out. Check the code and try again.');
+            document.getElementById('modern-connect-btn').textContent = 'Connect';
+            // Remove from active connections
+            activeConnections = activeConnections.filter(c => c !== conn);
+        }
+    }, 15000);
+};
+
+async function autoInitHost() {
+
+    if (typeof initPeer !== 'function') return;
+    try {
+        const peer = await initPeer();
+        window.myPeer = peer;
+        document.getElementById('modern-my-code').textContent = peer.id;
+        
+        peer.on('connection', conn => {
+            console.log('[SyncDrop] Incoming modern connection:', conn.peer);
+            activeConnections.push(conn);
+            
+            conn.on('open', () => {
+                console.log('[SyncDrop] DataChannel open (Host)');
+                if(typeof listenForFile === 'function') listenForFile(conn);
+            });
+            conn.on('error', err => console.error('Host conn error:', err));
+        });
+    } catch(e) {
+        console.error("Auto-init failed:", e);
+    }
+}
+autoInitHost();
+
+// Auto-send files when selected
+const origUpdatePreview = updateFilePreviewList;
+updateFilePreviewList = function() {
+    origUpdatePreview();
+    if(selectedFiles.length > 0 && typeof activeConnections !== 'undefined' && activeConnections.length > 0) {
+        let sent = false;
+        
+        // Clean up closed connections first
+        activeConnections = activeConnections.filter(c => c && (c.open || !c.peerConnection || c.peerConnection.signalingState !== 'closed'));
+        
+        // Try to send on the first open connection
+        for (let i = 0; i < activeConnections.length; i++) {
+            const conn = activeConnections[i];
+            if (conn.open) {
+                console.log("Auto-sending files over connection!");
+                if(typeof sendInChunks === 'function') sendInChunks(conn);
+                sent = true;
+                break;
+            }
+        }
+        
+        // If none are open yet, queue it on the most recently added connection
+        if (!sent && activeConnections.length > 0) {
+            const conn = activeConnections[activeConnections.length - 1];
+            console.warn("Connection not fully open yet. Queuing send.");
+            conn.on('open', () => {
+                if(selectedFiles.length > 0) {
+                    console.log("Channel opened, sending queued files!");
+                    setTimeout(() => {
+                        if(typeof sendInChunks === 'function') sendInChunks(conn);
+                    }, 500);
+                }
+            });
+        }
+    } else if (selectedFiles.length > 0) {
+        alert("Please connect to a device first!");
+        selectedFiles.length = 0; // Clear files if not connected
+    }
+};
+
+setTimeout(() => {
+
+  // Sync My Code
+  setInterval(() => {
+    const legacyCode = document.getElementById('my-code').textContent;
+    if(legacyCode && legacyCode.length === 6) {
+      document.getElementById('modern-my-code').textContent = legacyCode;
+    }
+  }, 1000);
+
+  // Connect Button
+  document.getElementById('modern-connect-btn').addEventListener('click', () => {
+    const code = document.getElementById('modern-connect-input').value;
+    if(code) {
+      document.getElementById('receive-code').value = code;
+      if(typeof connectToSender === 'function') connectToSender();
+    }
+  });
+
+  // Action Buttons
+  document.getElementById('modern-btn-photos').addEventListener('click', () => {
+    const input = document.getElementById('file-input');
+    input.setAttribute('accept', 'image/*,video/*');
+    input.click();
+  });
+  document.getElementById('modern-btn-files').addEventListener('click', () => {
+    const input = document.getElementById('file-input');
+    input.removeAttribute('accept');
+    input.click();
+  });
+  document.getElementById('modern-btn-folders').addEventListener('click', () => {
+    alert("Folder upload is supported by dragging a folder into the window.");
+  });
+
+  // Code Share Actions
+  document.getElementById('modern-btn-clip').addEventListener('click', () => {
+    document.getElementById('code-modal-title').textContent = "Share Code/Text";
+    document.getElementById('modern-code-textarea').value = '';
+    document.getElementById('modern-code-textarea').readOnly = false;
+    document.getElementById('modern-send-code-execute').style.display = 'block';
+    document.getElementById('modern-send-code-execute').textContent = 'Send Code';
+    document.getElementById('code-modal-overlay').classList.add('active');
+  });
+
+  document.getElementById('close-code-modal').addEventListener('click', () => {
+    document.getElementById('code-modal-overlay').classList.remove('active');
+  });
+
+  document.getElementById('modern-send-code-execute').addEventListener('click', () => {
+    if(document.getElementById('modern-code-textarea').readOnly) {
+       navigator.clipboard.writeText(document.getElementById('modern-code-textarea').value);
+       alert("Copied to clipboard!");
+       document.getElementById('code-modal-overlay').classList.remove('active');
+       return;
+    }
+
+    const codeContent = document.getElementById('modern-code-textarea').value.trim();
+    if (!codeContent) return;
+    
+    let sent = false;
+    if(typeof activeConnections !== 'undefined') {
+        activeConnections.forEach(conn => {
+            if(conn.open) {
+                try {
+                    conn.send(JSON.stringify({ type: 'code-share', content: codeContent }));
+                    sent = true;
+                } catch(e) {
+                    console.error("Code share error:", e);
+                }
+            } else {
+                conn.on('open', () => {
+                    setTimeout(() => {
+                        if (conn.open) {
+                            try {
+                                conn.send(JSON.stringify({ type: 'code-share', content: codeContent }));
+                                sent = true;
+                                // Close modal after delayed send
+                                if(sent) {
+                                    document.getElementById('code-share-modal').classList.remove('show');
+                                    document.getElementById('code-share-modal-content').value = '';
+                                }
+                            } catch(e) {}
+                        }
+                    }, 500);
+                });
+            }
+        });
+    }
+    if(sent) {
+        document.getElementById('code-modal-overlay').classList.remove('active');
+        
+        // Add to Recent List
+        const list = document.getElementById('modern-recent-list');
+        if(list.children[0] && list.children[0].innerText.includes('No recent')) list.innerHTML = '';
+        list.innerHTML = `<div class="recent-item">
+          <div class="recent-icon"><span class="material-icons-round">content_paste</span></div>
+          <div class="recent-info">
+            <div class="recent-name">Shared Snippet</div>
+            <div class="recent-meta">Just now</div>
+          </div>
+          <div class="recent-status"><span class="material-icons-round">check_circle</span></div>
+        </div>` + list.innerHTML;
+
+    } else {
+        alert("No active connections to send code. Please connect first.");
+    }
+  });
+
+  // Listen for received code-share
+  window.addEventListener('code-share-received', (e) => {
+    const code = e.detail;
+    document.getElementById('code-modal-title').textContent = "Received Code/Text";
+    document.getElementById('modern-code-textarea').value = code;
+    document.getElementById('modern-code-textarea').readOnly = true;
+    document.getElementById('modern-send-code-execute').style.display = 'block';
+    document.getElementById('modern-send-code-execute').textContent = 'Copy to Clipboard';
+    document.getElementById('code-modal-overlay').classList.add('active');
+
+    // Add to Recent List
+    const list = document.getElementById('modern-recent-list');
+    if(list.children[0] && list.children[0].innerText.includes('No recent')) list.innerHTML = '';
+    list.innerHTML = `<div class="recent-item">
+      <div class="recent-icon"><span class="material-icons-round">content_copy</span></div>
+      <div class="recent-info">
+        <div class="recent-name">Received Snippet</div>
+        <div class="recent-meta">Just now</div>
+      </div>
+      <div class="recent-status"><span class="material-icons-round">check_circle</span></div>
+    </div>` + list.innerHTML;
+  });
+
+  // Disconnect Button
+  document.getElementById('modern-disconnect-btn').addEventListener('click', () => {
+    window.location.reload(); 
+  });
+
+  // UI State Watcher (Polls legacy status to update modern UI)
+  setInterval(() => {
+    const hasActiveConns = typeof activeConnections !== 'undefined' && activeConnections && activeConnections.length > 0;
+    if (hasActiveConns) {
+      document.getElementById('modern-disconnected-state').style.display = 'none';
+      document.getElementById('modern-connected-state').style.display = 'flex';
+      document.getElementById('modern-peer-name').textContent = "Remote Peer";
+      document.getElementById('modern-status-dot').style.background = 'var(--success)';
+      document.getElementById('modern-status-text').textContent = "Connected";
+    } else {
+      document.getElementById('modern-disconnected-state').style.display = 'block';
+      document.getElementById('modern-connected-state').style.display = 'none';
+      document.getElementById('modern-peer-name').textContent = "Not Connected";
+      document.getElementById('modern-status-dot').style.background = 'var(--danger)';
+      document.getElementById('modern-status-text').textContent = "Waiting for connection...";
+    }
+  }, 1000);
+
+}, 1500);
 </script>
 </body>
 </html>
